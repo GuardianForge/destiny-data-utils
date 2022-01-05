@@ -1,13 +1,12 @@
 {
-  "name": "destiny-data-utils",
-  "scope": "GuardianForge",
-  "version": "0.0.1",
+  "name": "@guardianforge/destiny-data-utils",
+  "version": "0.0.5",
   "description": "",
-  "main": "main.js",
-  "dependencies": {
+  "main": "dist/Main.js",
+  "types": "dist/Main.d.ts",
+  "devDependencies": {
     "typescript": "^4.5.4"
   },
-  "devDependencies": {},
   "scripts": {
     "build": "tsc --build",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,11 +15,18 @@
     "type": "git",
     "url": "git+https://github.com/GuardianForge/destiny-data-utils.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Bungie",
+    "Destiny",
+    "Destiny 2"
+  ],
+  "author": "Brian Morrison II",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/GuardianForge/destiny-data-utils/issues"
   },
-  "homepage": "https://github.com/GuardianForge/destiny-data-utils#readme"
+  "homepage": "https://github.com/GuardianForge/destiny-data-utils#readme",
+  "files": [
+    "dist/**/*"
+  ]
 }

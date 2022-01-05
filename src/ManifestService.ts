@@ -9,6 +9,7 @@ export default class ManifestService {
   components: string[]
   manifestData: Map<string, any>
 
+  // TODO: Populate all components
   allComponents = [
 
   ]
