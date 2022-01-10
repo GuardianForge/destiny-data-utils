@@ -1,6 +1,6 @@
 {
   "name": "@guardianforge/destiny-data-utils",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/Main.js",
   "types": "dist/Main.d.ts",
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release:minor": "npm version minor --force && tsc --build && npm publish"
   },
   "repository": {
     "type": "git",
