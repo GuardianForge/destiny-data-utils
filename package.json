@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsc --build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "release:minor": "npm version minor --force && tsc --build && npm publish"
+    "release:patch": "npm version patch --force && tsc --build && npm publish",
+    "release:minor": "npm version minor --force && tsc --build && npm publish",
+    "release:major": "npm version major --force && tsc --build && npm publish"
   },
   "repository": {
     "type": "git",
