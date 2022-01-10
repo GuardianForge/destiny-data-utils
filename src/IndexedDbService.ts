@@ -1,6 +1,6 @@
-import IManifestCache from "./interfaces/IManifestCache";
+import { IManifestCache } from "./interfaces/IManifestCache";
 
-export default class IndexedDbService implements IManifestCache{
+export class IndexedDbService implements IManifestCache{
   // @ts-ignore TODO: make this nullable and add checks below
   database: IDBDatabase
   dbName: string
@@ -23,6 +23,7 @@ export default class IndexedDbService implements IManifestCache{
       request.onsuccess = e => {
         // @ts-ignore
         this.database = e.target.result
+        resolve(null)
       };
 
       request.onupgradeneeded = e => {
@@ -44,11 +45,13 @@ export default class IndexedDbService implements IManifestCache{
             this.database.createObjectStore(el)
           })
         }
+        resolve(null)
       };
     });
   }
 
   async add(storeName: string, key: string, value: any): Promise<null> {
+    console.log("writing to", storeName, key)
     return new Promise((resolve, reject) => {
       let trans = this.database.transaction([storeName], 'readwrite')
 

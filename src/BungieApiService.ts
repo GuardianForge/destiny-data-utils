@@ -1,4 +1,4 @@
-export default class BungieApiService {
+export class BungieApiService {
   _apiKey: string
   _bungieNetBase: string = "https://www.bungie.net"
   _bungieNetApiBase: string = "https://www.bungie.net/Platform"

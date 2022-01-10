@@ -1,18 +1,12 @@
-import BungieApiService from "./BungieApiService"
-import BungieAuthService from "./BungieAuthService"
-import IManifestCache from "./interfaces/IManifestCache"
+import { BungieApiService } from "./BungieApiService"
+import { IManifestCache } from "./interfaces/IManifestCache"
 
-export default class ManifestService {
+export class ManifestService {
   bungieApiService: BungieApiService
   cache?: IManifestCache
   manifestVersion: string
   components: string[]
   manifestData: Map<string, any>
-
-  // TODO: Populate all components
-  allComponents = [
-
-  ]
 
   collections = {
     CONFIG: "config",
@@ -27,29 +21,11 @@ export default class ManifestService {
     if(components !== undefined) {
       this.components = components
     } else {
-      this.components = this.allComponents
+      this.components = []
     }
 
-    // this.components = [
-    //   "DestinyInventoryItemDefinition",
-    //   "DestinySocketTypeDefinition",
-    //   "DestinySocketCategoryDefinition",
-    //   "DestinyDamageTypeDefinition",
-    //   "DestinyStatDefinition",
-    //   "DestinyInventoryBucketDefinition",
-    //   "DestinyTalentGridDefinition",
-    //   "DestinyActivityDefinition",
-    //   "DestinyActivityTypeDefinition",
-    //   "DestinyActivityModeDefinition",
-    //   "DestinyActivityGraphDefinition",
-    //   "DestinyEnergyTypeDefinition"
-    // ]
-
-    // window.manifestComponents = {}
     this.manifestData = new Map<string, any>()
   }
-
-  // bucketLocationMap = {}
 
   async init() {
     if(this.cache !== undefined) {
@@ -61,12 +37,15 @@ export default class ManifestService {
 
     if(this.cache !== undefined) {
       let dbVersion = await this.cache.get("config", "manifestVersion")
-      if(!dbVersion) {
+      if(!dbVersion || dbVersion === undefined) {
+        console.log("Downloading manifest manifest, version:", manifest.version)
         await this.initManifest(manifest)
       } else if(dbVersion !== this.manifestVersion) {
+        console.log(`Updating manifest from version ${dbVersion} to ${manifest.version}`)
         await this.cache.clearStore(this.collections.MANIFEST)
         await this.initManifest(manifest)
       } else {
+        console.log("Loading cached manifest, version:", dbVersion)
         await this.importManifestFromDb()
         let isImportFromDbSuccessful = this.isImportFromDbSuccessful()
         if(!isImportFromDbSuccessful) {
@@ -76,6 +55,7 @@ export default class ManifestService {
         }
       }
     } else {
+      console.log("Loading manifest without caching.")
       await this.initManifest(manifest)
     }
   }
@@ -93,26 +73,32 @@ export default class ManifestService {
     let componentKeys = Object.keys(manifest.jsonWorldComponentContentPaths.en)
 
     let fetchManifestComponentPromises: Promise<any>[] = []
-    componentKeys.forEach(key => {
-      if(this.components.find(el => el === key)) {
+    if(this.components.length > 0) {
+      componentKeys.forEach(key => {
+        if(this.components.find(el => el === key)) {
+          let componentUrl = manifest.jsonWorldComponentContentPaths.en[key]
+          fetchManifestComponentPromises.push(this.bungieApiService.fetchManifestComponent(key, componentUrl))
+        }
+      })
+    } else {
+      componentKeys.forEach(key => {
         let componentUrl = manifest.jsonWorldComponentContentPaths.en[key]
         fetchManifestComponentPromises.push(this.bungieApiService.fetchManifestComponent(key, componentUrl))
-      }
-    })
+      })
+    }
     let rawManifestData = await Promise.all(fetchManifestComponentPromises)
 
-    rawManifestData.forEach(el =>  this.importComponent(el.componentName, el.data))
+    rawManifestData.forEach(el => this.manifestData.set(el.componentName, el.data))
   }
 
   async cacheManifest() {
     if(this.cache !== undefined) {
       let promises: Promise<any>[] = []
-      Object.keys(this.manifestData).forEach(key => {
-        // @ts-ignore TODO: Figure out how to get the interface to return a promise
-        promises.push(this.cache.add(this.collections.MANIFEST, key, this.manifestData.get(key)))
-      })
+      let keys = this.manifestData.keys()
+      for(let k of keys) {
+        promises.push(this.cache.add(this.collections.MANIFEST, k, this.manifestData.get(k)))
+      }
       await Promise.all(promises)
-
     }
   }
 
@@ -141,12 +127,8 @@ export default class ManifestService {
   async importManifestComponentFromDb(manifestKey: string) {
     if(this.cache) {
       let data = await this.cache.get(this.collections.MANIFEST, manifestKey)
-      this.importComponent(manifestKey, data)
+      this.manifestData.set(manifestKey, data)
     }
-  }
-
-  async importComponent(componentName: string, data: any) {
-    this.manifestData.set(componentName, data)
   }
 
   getItem(componentName: string, hash: string) {

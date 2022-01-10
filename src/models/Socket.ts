@@ -1,5 +1,5 @@
 import { SocketTypeEnum } from "./Enums"
-import SocketItem from "./SocketItem"
+import { SocketItem } from "./SocketItem"
 
 export type SocketMeta = {
   plugSet?: any

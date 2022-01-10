@@ -1,5 +1,5 @@
 import Socket from "./Socket"
-import SocketItem from "./SocketItem"
+import { SocketItem } from "./SocketItem"
 import { ItemTypeEnum, ItemSubTypeEnum, DamageTypeEnum, BucketTypeEnum, SocketTypeEnum } from "./Enums"
 
 export type ItemMeta = {
@@ -18,7 +18,7 @@ export type ItemMeta = {
   source?: string
 }
 
-export default class Item {
+export class Item {
   _meta: ItemMeta
   hash?: number
   iconUrl?: string

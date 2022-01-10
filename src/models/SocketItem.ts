@@ -2,7 +2,7 @@ export type SocketItemMeta = {
   manifestDefinition?: any
 }
 
-export default class SocketItem {
+export class SocketItem {
   _meta?: SocketItemMeta
   iconUrl?: string
   name?: string

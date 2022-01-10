@@ -1,14 +1,14 @@
-import BungieApiService from "./BungieApiService";
-import Item from "./models/Item";
+import { BungieApiService } from "./BungieApiService";
+import { Item } from "./models/Item";
 import Socket from "./models/Socket";
 import { ClassEnum, SocketTypeEnum, BucketTypeEnum, ItemTypeEnum, ItemSubTypeEnum } from "./models/Enums";
-import ManifestService from "./ManifestService";
+import { ManifestService } from "./ManifestService";
 
 export type UserInventory = {
   items: Item[]
 }
 
-export default class InventoryManager {
+export class InventoryManager {
   _bungieApiService: BungieApiService
   _manifestService: ManifestService
   _inventory: UserInventory

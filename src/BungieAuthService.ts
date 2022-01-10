@@ -1,4 +1,4 @@
-export default class BungieAuthService {
+export class BungieAuthService {
   _clientId: string
   _apiKey: string
   _loginUrl: string

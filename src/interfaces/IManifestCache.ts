@@ -1,4 +1,4 @@
-export default interface IManifestCache {
+export interface IManifestCache {
   init: (collectionNames: string[]) => Promise<null>
   add: (storeName: string, key: string, value: any) => Promise<null>
   get: (storeName: string, key: string) => Promise<any>
