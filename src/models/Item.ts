@@ -1,4 +1,4 @@
-import Socket from "./Socket"
+import { Socket } from "./Socket"
 import { SocketItem } from "./SocketItem"
 import { ItemTypeEnum, ItemSubTypeEnum, DamageTypeEnum, BucketTypeEnum, SocketTypeEnum } from "./Enums"
 

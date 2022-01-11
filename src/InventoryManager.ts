@@ -1,6 +1,6 @@
 import { BungieApiService } from "./BungieApiService";
 import { Item } from "./models/Item";
-import Socket from "./models/Socket";
+import { Socket } from "./models/Socket";
 import { ClassEnum, SocketTypeEnum, BucketTypeEnum, ItemTypeEnum, ItemSubTypeEnum } from "./models/Enums";
 import { ManifestService } from "./ManifestService";
 

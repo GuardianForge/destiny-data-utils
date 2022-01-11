@@ -8,7 +8,7 @@ export type SocketMeta = {
   itemSocketMeta?: any
 }
 
-export default class Socket {
+export class Socket {
   _meta?: SocketMeta
   type?: SocketTypeEnum
   position?: number
