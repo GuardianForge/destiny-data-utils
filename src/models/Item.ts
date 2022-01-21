@@ -7,6 +7,7 @@ export type ItemMeta = {
   manifestDefinition?: any
   // Raw item from API response
   inventoryItem?: any
+  talentGridDefinition?: any
   energyTypeDefinition?: any
   // Instanced item from API response
   instance?: any
@@ -16,6 +17,7 @@ export type ItemMeta = {
   reusablePlugs?: any
   stats?: any
   source?: string
+  talentGrid?: any
 }
 
 export class Item {
@@ -69,7 +71,7 @@ export class Item {
     }
   }
 
-  populate(manifestService: any, plugSets: any) {
+  populate(manifestService: any, plugSets: any, talentGrids?: any) {
     // Basic info
     let itemHash = 0
     if(this._meta?.inventoryItem.itemHash) {
@@ -79,6 +81,7 @@ export class Item {
     if(this._meta.inventoryItem.plugItemHash) {
       itemHash = this._meta.inventoryItem.plugItemHash
     }
+
     this.hash = itemHash
     let itemDef = manifestService.getItem("DestinyInventoryItemDefinition", itemHash);
     if(itemDef) {
@@ -99,6 +102,10 @@ export class Item {
 
     if(itemDef && itemDef.inventory && itemDef.inventory.bucketTypeHash) {
       this.slot = itemDef.inventory.bucketTypeHash
+    }
+
+    if(itemDef && itemDef.talentGrid && itemDef.talentGrid.talentGridHash) {
+      this._meta.talentGridDefinition = manifestService.getItem("DestinyTalentGridDefinition", itemDef.talentGrid.talentGridHash)
     }
 
     if(this._meta.instance) {
@@ -185,6 +192,11 @@ export class Item {
         }
         this.sockets.push(socket)
       })
+    }
+
+    // Talent Grids
+    if(talentGrids && this._meta.inventoryItem.itemInstanceId && talentGrids[this._meta.inventoryItem.itemInstanceId]) {
+      this._meta.talentGrid = talentGrids[this._meta.inventoryItem.itemInstanceId]
     }
   }
 
@@ -293,5 +305,66 @@ export class Item {
 
   getStats() {
     let power = this._meta.instance.primaryStat.value
+  }
+
+  // Helper methods for v2 subclasses
+  getEquippedClassSpecialty() {
+    return this.getEquppedSubclassNodeByIdentifier("ClassSpecialties")
+  }
+
+  getEquippedGrenade() {
+    return this.getEquppedSubclassNodeByIdentifier("Grenades")
+  }
+
+  getEquippedMovementMode() {
+    return this.getEquppedSubclassNodeByIdentifier("MovementModes")
+  }
+
+  getEquippedSuperTree() {
+    let superTree = {
+      name: "",
+      equippedTree: 0,
+      perks: []
+    }
+
+    let trees = [
+      "FirstPath",
+      "SecondPath",
+      "ThirdPath"
+    ]
+
+    let categories = this._meta.talentGridDefinition.nodeCategories.filter((n: any) => trees.includes(n.identifier))
+    console.log(categories)
+    categories.forEach((c: any) => {
+      c.nodeHashes.forEach((nodeIndex: number) => {
+        if(this._meta.talentGrid.nodes[nodeIndex].isActivated) {
+          if(c.identifier === "FirstPath") {
+            superTree.equippedTree = 1
+          }
+          if(c.identifier === "SecondPath") {
+            superTree.equippedTree = 2
+          }
+          if(c.identifier === "ThirdPath") {
+            superTree.equippedTree = 3
+          }
+          superTree.name = c.displayProperties.name
+          // @ts-ignore
+          superTree.perks.push(this._meta.talentGridDefinition.nodes[nodeIndex].steps[0].displayProperties)
+        }
+      })
+    })
+
+    return superTree
+  }
+
+  private getEquppedSubclassNodeByIdentifier(identifier: string) {
+    let nodeCategory = this._meta.talentGridDefinition.nodeCategories.find((n: any) => n.identifier === identifier)
+    let equipped;
+    nodeCategory.nodeHashes.forEach((nodeIndex: number) => {
+      if(this._meta.talentGrid.nodes[nodeIndex].isActivated) {
+        equipped = this._meta.talentGridDefinition.nodes[nodeIndex].steps[0].displayProperties
+      }
+    })
+    return equipped
   }
 }

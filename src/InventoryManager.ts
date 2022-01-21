@@ -1,4 +1,4 @@
-import { BungieApiService } from "./BungieApiService";
+import { BungieApiService, BungieMembershipType } from "./BungieApiService";
 import { Item } from "./models/Item";
 import { Socket } from "./models/Socket";
 import { ClassEnum, SocketTypeEnum, BucketTypeEnum, ItemTypeEnum, ItemSubTypeEnum } from "./models/Enums";
@@ -13,6 +13,9 @@ export class InventoryManager {
   _manifestService: ManifestService
   _inventory: UserInventory
 
+  // Events
+  onInventoryLoaded?: Function
+
   constructor(bungieApiService: BungieApiService, manifestService: ManifestService) {
     this._bungieApiService = bungieApiService
     this._manifestService = manifestService
@@ -21,8 +24,11 @@ export class InventoryManager {
     }
   }
 
-  loadInventory(inventoryResponse: any) {
-    console.log("loadInventory", inventoryResponse)
+  async loadInventory(membershipType: BungieMembershipType, membershipId: string, token: string) {
+    let comps = [ 102, 103, 200, 201, 205, 300, 302, 303, 304, 305, 306, 307, 308, 310, 600 ]
+    let getProfileResponse = await this._bungieApiService.GetProfile(membershipType, membershipId, comps, token)
+
+    console.log("getProfileResponse", getProfileResponse)
     const {
       profileInventory,
       itemComponents,
@@ -30,20 +36,32 @@ export class InventoryManager {
       characterInventories,
       characterPlugSets,
       characterCurrencyLookups,
+      characterEquipment,
       characters
-    } = inventoryResponse
+    } = getProfileResponse
 
     profileInventory.data.items.forEach((el: any) => {
       // TODO: Turn these locations into an enum
       let item = new Item(el, itemComponents, "profileInventory")
-      item.populate(this._manifestService, profilePlugSets.data)
+      item.populate(this._manifestService, profilePlugSets.data, itemComponents.talentGrids.data)
       this._inventory?.items.push(item)
     })
 
     Object.keys(characterInventories.data).forEach((k: string) => {
       characterInventories.data[k].items.forEach((el: any) => {
         let item = new Item(el, itemComponents, "characterInventories")
-        item.populate(this._manifestService, characterPlugSets.data[k])
+        item.populate(this._manifestService, characterPlugSets.data[k], itemComponents.talentGrids.data)
+        if(characters && characters.data && characters.data[k]) {
+          item.location = characters.data[k]
+        }
+        this._inventory?.items.push(item)
+      })
+    })
+
+    Object.keys(characterEquipment.data).forEach((k: string) => {
+      characterEquipment.data[k].items.forEach((el: any) => {
+        let item = new Item(el, itemComponents, "characterEquipment")
+        item.populate(this._manifestService, characterPlugSets.data[k], itemComponents.talentGrids.data)
         if(characters && characters.data && characters.data[k]) {
           item.location = characters.data[k]
         }
@@ -60,25 +78,9 @@ export class InventoryManager {
       })
     })
 
-    Object.keys(characterCurrencyLookups.data).forEach((k: string) => {
-      Object.keys(characterCurrencyLookups.data[k].itemQuantities).forEach((hash: string) => {
-        // Fix for subclass issue, not sure why subclasses sometimes show in inventory and some in currencies...
-        let itemHash = Number(hash)
-        if(!this._inventory?.items.find((i: Item) => i.hash == itemHash)) {
-          let item = new Item({
-            itemHash: itemHash
-          }, null, "characterCurrencyLookups")
-          item.populate(this._manifestService, null)
-          item.quantity = characterCurrencyLookups.data[k].itemQuantities[hash]
-          if(characters && characters.data && characters.data[k]) {
-            item.location = characters.data[k]
-          }
-          this._inventory?.items.push(item)
-        }
-      })
-    })
-
-    console.log("populated inventory", this._inventory)
+    if(this.onInventoryLoaded) {
+      this.onInventoryLoaded(this._inventory)
+    }
   }
 
   getAvailableSubclasses(classType: ClassEnum): Array<Item> {

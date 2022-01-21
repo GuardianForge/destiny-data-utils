@@ -1,7 +1,68 @@
+export enum ComponentTypeEnum {
+  None = 0,
+  Profiles = 100,
+  VendorReceipts = 101,
+  ProfileInventories = 102,
+  ProfileCurrencies = 103,
+  ProfileProgression = 104,
+  PlatformSilver = 105,
+  Characters = 200,
+  CharacterInventories = 201,
+  CharacterProgressions = 202,
+  CharacterRenderData = 203,
+  CharacterActivities = 204,
+  CharacterEquipment = 205,
+  ItemInstances = 300,
+  ItemObjectives = 301,
+  ItemPerks = 302,
+  ItemRenderData = 303,
+  ItemStats = 304,
+  ItemTalentGrids = 306,
+  ItemCommonData = 307,
+  ItemPlugStates = 308,
+  ItemPlugObjectives = 309,
+  ItemReusablePlugs = 310,
+  Vendors = 400,
+  VendorCategories = 401,
+  VendorSales = 402,
+  Kiosks = 500,
+  CurrencyLookups = 600,
+  PresentationNodes = 700,
+  Collectibles = 800,
+  Records = 900,
+  Transitory = 1000,
+  Metrics = 1100,
+  StringVariables = 1200
+}
+
+export enum BungieMembershipType {
+  None = 0,
+  Xbox = 1,
+  Psn = 2,
+  Steam = 3,
+  Blizzard = 4,
+  Stadia = 5,
+  Demon = 10,
+  BungieNext = 254,
+  All = -1
+}
+
+// TODO: Build this out
+type GetProfileResponse = {
+  profileInventory: any
+  itemComponents: any
+  profilePlugSets: any
+  characterInventories: any
+  characterPlugSets: any
+  characterCurrencyLookups: any
+  characters: any
+  characterEquipment: any
+}
 export class BungieApiService {
   _apiKey: string
   _bungieNetBase: string = "https://www.bungie.net"
   _bungieNetApiBase: string = "https://www.bungie.net/Platform"
+  _clientId?: string
 
   constructor(apiKey: string) {
     this._apiKey = apiKey
@@ -26,6 +87,23 @@ export class BungieApiService {
     })
     let data = await res.json()
     return data.Response
+  }
+
+  /**
+   * Gets profile info based on the passed in components
+   * @param membershipType - The users platform
+   * @param destinyMembershipId - The users unique Destiny membership id
+   * @param components - An array of components to fetch
+   * @param token - The users access token
+   */
+  async GetProfile(membershipType: BungieMembershipType, destinyMembershipId: string, components: Array<ComponentTypeEnum>, token?: string): Promise<GetProfileResponse> {
+    let url = `${this._bungieNetApiBase}/Destiny2/${membershipType}/Profile/${destinyMembershipId}`
+    url += `?components=${components.join(",")}`
+    if(token) {
+      return await this.callBungieNet(url, "GET", { "Authorization": `Bearer ${token}`})
+    } else {
+      return await this.callBungieNet(url, "GET")
+    }
   }
 
   async fetchManifestComponent(componentName: string, componentPath: string) {
@@ -127,6 +205,9 @@ export class BungieApiService {
     return await this.callBungieNet(`${this._bungieNetApiBase}/User/GetMembershipsById/${membershipId}/all/`)
   }
 
+  /**
+   * @deprecated GetProfile should be used instead
+   */
   async fetchUserInventory(token: string, membershipType: number, membershipId: string) {
     let comps = [ 102, 103, 200, 201, 300, 302, 303, 304, 305, 307, 308, 310, 600, 800 ]
     let url = `${this._bungieNetApiBase}/Destiny2/${membershipType}/Profile/${membershipId}`
