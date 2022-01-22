@@ -323,7 +323,7 @@ export class Item {
   getEquippedSuperTree() {
     let superTree = {
       name: "",
-      equippedTree: 0,
+      pos: 0,
       perks: []
     }
 
@@ -334,18 +334,17 @@ export class Item {
     ]
 
     let categories = this._meta.talentGridDefinition.nodeCategories.filter((n: any) => trees.includes(n.identifier))
-    console.log(categories)
     categories.forEach((c: any) => {
       c.nodeHashes.forEach((nodeIndex: number) => {
         if(this._meta.talentGrid.nodes[nodeIndex].isActivated) {
           if(c.identifier === "FirstPath") {
-            superTree.equippedTree = 1
+            superTree.pos = 1
           }
           if(c.identifier === "SecondPath") {
-            superTree.equippedTree = 2
+            superTree.pos = 2
           }
           if(c.identifier === "ThirdPath") {
-            superTree.equippedTree = 3
+            superTree.pos = 3
           }
           superTree.name = c.displayProperties.name
           // @ts-ignore
@@ -366,5 +365,65 @@ export class Item {
       }
     })
     return equipped
+  }
+
+
+  getAvailableClassSpecialties() {
+    return this.getAvailableSucblassNodesByIdentifier("ClassSpecialties")
+  }
+
+  getAvailableGrenades() {
+    return this.getAvailableSucblassNodesByIdentifier("Grenades")
+  }
+
+  getAvailableMovementModes() {
+    return this.getAvailableSucblassNodesByIdentifier("MovementModes")
+  }
+
+  getAvailableSuperTrees() {
+    let superTrees = new Array<any>();
+
+    let trees = [
+      "FirstPath",
+      "SecondPath",
+      "ThirdPath"
+    ]
+
+    let categories = this._meta.talentGridDefinition.nodeCategories.filter((n: any) => trees.includes(n.identifier))
+    categories.forEach((c: any) => {
+      c.nodeHashes.forEach((nodeIndex: number) => {
+        let tree = 0
+        if(c.identifier === "FirstPath") {
+          tree = 1
+        }
+        if(c.identifier === "SecondPath") {
+          tree = 2
+        }
+        if(c.identifier === "ThirdPath") {
+          tree = 3
+        }
+        if(!superTrees[tree]) {
+          superTrees[tree] = {
+            name: c.displayProperties.name,
+            pos: tree,
+            perks: []
+          }
+        }
+        // @ts-ignore
+        superTrees[tree].perks.push(this._meta.talentGridDefinition.nodes[nodeIndex].steps[0].displayProperties)
+      })
+    })
+
+    return superTrees
+  }
+
+  private getAvailableSucblassNodesByIdentifier(identifier: string) {
+    let nodeCategory = this._meta.talentGridDefinition.nodeCategories.find((n: any) => n.identifier === identifier)
+    // TODO: Buld a model for this
+    let nodes = new Array<any>();
+    nodeCategory.nodeHashes.forEach((nodeIndex: number) => {
+      nodes.push(this._meta.talentGridDefinition.nodes[nodeIndex].steps[0].displayProperties)
+    })
+    return nodes;
   }
 }
