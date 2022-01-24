@@ -1,6 +1,6 @@
 {
   "name": "@guardianforge/destiny-data-utils",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "",
   "main": "dist/Main.js",
   "types": "dist/Main.d.ts",
