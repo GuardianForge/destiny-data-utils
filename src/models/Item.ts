@@ -2,6 +2,12 @@ import { Socket } from "./Socket"
 import { SocketItem } from "./SocketItem"
 import { ItemTypeEnum, ItemSubTypeEnum, DamageTypeEnum, BucketTypeEnum, SocketTypeEnum } from "./Enums"
 
+export type ItemTierData = {
+  icon?: string
+  damageType?: DamageTypeEnum
+  tier?: number
+}
+
 export type ItemMeta = {
   // Item definition from the manifest
   manifestDefinition?: any
@@ -300,7 +306,17 @@ export class Item {
   }
 
   getItemTier() {
-
+    let tierInfo: ItemTierData = {}
+    if(this._meta && this._meta.instance && this._meta.instance.energy && this._meta.instance.energy.energyCapacity !== undefined) {
+      tierInfo.tier = this._meta.instance.energy.energyCapacity
+      tierInfo.damageType = this._meta.instance.energy.energyType
+    }
+    if(this._meta.damageType && this._meta.damageType.displayProperties && this._meta.damageType.displayProperties.hasIcon) {
+      tierInfo.icon = `https://www.bungie.net${this._meta.damageType.displayProperties.icon}`
+    } else if(this._meta.energyTypeDefinition && this._meta.energyTypeDefinition.displayProperties && this._meta.energyTypeDefinition.displayProperties.hasIcon) {
+      tierInfo.icon = `https://www.bungie.net${this._meta.energyTypeDefinition.displayProperties.icon}`
+    }
+    return tierInfo
   }
 
   getStats() {

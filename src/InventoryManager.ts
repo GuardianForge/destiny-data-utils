@@ -132,11 +132,11 @@ export class InventoryManager {
       return null
     }
 
-    let whitelistPlugHashes: any= {}
+    let whitelistPlugHashes: any = {}
 
     item.sockets.forEach((socket: Socket) => {
       if(socket._meta?.categoryDefinition &&
-        socket.position &&
+        socket.position !== undefined &&
         (socket._meta?.categoryDefinition?.hash === SocketTypeEnum.WeaponMods ||
         socket._meta?.categoryDefinition.hash === SocketTypeEnum.ArmorMods)) {
           let hashes = socket._meta.typeDefinition.plugWhitelist.map((pwl: any) => pwl.categoryHash)
@@ -160,7 +160,6 @@ export class InventoryManager {
 
       if(items) {
         socketPlugMap.set(Number(key), items)
-        // socketPlugMap[key] = items
       }
     })
 
