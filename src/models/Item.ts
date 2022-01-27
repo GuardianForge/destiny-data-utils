@@ -1,6 +1,6 @@
 import { Socket } from "./Socket"
 import { SocketItem } from "./SocketItem"
-import { ItemTypeEnum, ItemSubTypeEnum, DamageTypeEnum, BucketTypeEnum, SocketTypeEnum } from "./Enums"
+import { ItemTypeEnum, ItemSubTypeEnum, DamageTypeEnum, BucketTypeEnum, SocketTypeEnum, EnergyTypeEnum } from "./Enums"
 
 export type ItemTierData = {
   icon?: string
@@ -37,6 +37,7 @@ export class Item {
   itemType?: ItemTypeEnum
   itemSubType?: ItemSubTypeEnum
   damageType?: DamageTypeEnum
+  energyType?: EnergyTypeEnum
   slot?: BucketTypeEnum
   sockets?: Socket[]
   power?: number
@@ -45,6 +46,7 @@ export class Item {
   // TODO: Make this a Character class
   location?: any
   isVaulted?: boolean
+  cost?: number
 
   constructor(item: any, itemComponents: any, source?: string) {
     this._meta = {}
@@ -77,6 +79,12 @@ export class Item {
     }
   }
 
+  /**
+   * Populates the item with data from the manifest and other relevant data sets
+   * @param manifestService An instance of the ManifestService
+   * @param plugSets  PlugSets from the GetProfile response
+   * @param talentGrids  TalentGrids from the GetProfile response
+   */
   populate(manifestService: any, plugSets: any, talentGrids?: any) {
     // Basic info
     let itemHash = 0
@@ -114,9 +122,11 @@ export class Item {
       this._meta.talentGridDefinition = manifestService.getItem("DestinyTalentGridDefinition", itemDef.talentGrid.talentGridHash)
     }
 
+    // Damage type
     if(this._meta.instance) {
       let damageTypeDefinition = manifestService.getItem("DestinyDamageTypeDefinition", this._meta.instance.damageTypeHash)
       if(damageTypeDefinition) {
+        this.damageType = this._meta.instance.damageType
         this._meta.damageType = damageTypeDefinition
         // TODO: Populate an enum
       }
@@ -124,9 +134,27 @@ export class Item {
       if(this._meta.instance.energy) {
         let energyTypeDefinition = manifestService.getItem("DestinyEnergyTypeDefinition", this._meta.instance.energy.energyTypeHash)
         if(energyTypeDefinition) {
+          this.energyType = this._meta.instance.energyType
           this._meta.energyTypeDefinition = energyTypeDefinition
         }
       }
+    }
+
+    if(itemDef.plug && itemDef.plug.energyCost) {
+      this.cost = itemDef.plug.energyCost.energyCost
+
+      if(this.energyType === undefined) {
+        let energyTypeDefinition = manifestService.getItem("DestinyEnergyTypeDefinition", itemDef.plug.energyCost.energyTypeHash)
+        if(energyTypeDefinition) {
+          this.energyType = itemDef.plug.energyCost.energyType
+          this._meta.energyTypeDefinition = energyTypeDefinition
+        }
+      }
+    }
+
+    // Damage type on V2 subclasses
+    if(this.damageType == undefined && itemDef.talentGrid && itemDef.talentGrid.hudDamageType) {
+      this.damageType = itemDef.talentGrid.hudDamageType
     }
 
     // Stats
@@ -164,6 +192,7 @@ export class Item {
           let plugDef = manifestService.getItem("DestinyInventoryItemDefinition", this._meta.sockets[idx].plugHash)
           if(plugDef) {
             socket.equippedPlug = new SocketItem(plugDef)
+            socket.equippedPlug.socketIndex = idx
 
             if(this._meta.reusablePlugs && this._meta.reusablePlugs[idx]) {
               let availablePlugs: SocketItem[] = []
@@ -235,7 +264,7 @@ export class Item {
   getEquippedPerks(): (SocketItem[] | null) {
     if(this.itemType === ItemTypeEnum.Weapon) {
       let items: Array<SocketItem> = []
-      this.sockets?.forEach(s => {
+      this.sockets?.forEach((s: Socket, idx: number) => {
         if(s._meta?.categoryDefinition?.hash === SocketTypeEnum.WeaponPerks &&
           s._meta?.itemSocketMeta?.isVisible &&
           s.equippedPlug) {
@@ -258,6 +287,23 @@ export class Item {
       if(this.sockets) {
         return this.sockets.filter((s: Socket) => s._meta?.categoryDefinition && s._meta?.categoryDefinition.hash === SocketTypeEnum.ArmorMods)
       }
+    }
+    return null
+  }
+
+  getAvailableModsForSocket(socket: Socket) {
+    // TODO: Consider the energy type
+  }
+
+  getModEnergyConsumption(): (number | null) {
+    if(this.sockets) {
+      let consumption = 0
+      this.sockets.forEach((s: Socket) => {
+        if(s.equippedPlug && s.equippedPlug.cost) {
+          consumption += s.equippedPlug.cost
+        }
+      })
+      return consumption
     }
     return null
   }
@@ -295,7 +341,7 @@ export class Item {
     return null
   }
 
-  getAffinityIcon() {
+  getAffinityIcon(): (string | null) {
     if(this._meta.damageType && this._meta.damageType.displayProperties && this._meta.damageType.displayProperties.hasIcon) {
       return `https://www.bungie.net${this._meta.damageType.displayProperties.icon}`
     }
@@ -323,20 +369,42 @@ export class Item {
     let power = this._meta.instance.primaryStat.value
   }
 
+  getSubclassVersion(): number {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
+    if(this._meta && this._meta.sockets) {
+      return 3
+    }
+    return 2
+  }
+
   // Helper methods for v2 subclasses
   getEquippedClassSpecialty() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getEquppedSubclassNodeByIdentifier("ClassSpecialties")
   }
 
   getEquippedGrenade() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getEquppedSubclassNodeByIdentifier("Grenades")
   }
 
   getEquippedMovementMode() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getEquppedSubclassNodeByIdentifier("MovementModes")
   }
 
   getEquippedSuperTree() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     let superTree = {
       name: "",
       pos: 0,
@@ -373,6 +441,9 @@ export class Item {
   }
 
   private getEquppedSubclassNodeByIdentifier(identifier: string) {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     let nodeCategory = this._meta.talentGridDefinition.nodeCategories.find((n: any) => n.identifier === identifier)
     let equipped;
     nodeCategory.nodeHashes.forEach((nodeIndex: number) => {
@@ -385,18 +456,30 @@ export class Item {
 
 
   getAvailableClassSpecialties() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getAvailableSucblassNodesByIdentifier("ClassSpecialties")
   }
 
   getAvailableGrenades() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getAvailableSucblassNodesByIdentifier("Grenades")
   }
 
   getAvailableMovementModes() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     return this.getAvailableSucblassNodesByIdentifier("MovementModes")
   }
 
   getAvailableSuperTrees() {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     let superTrees = new Array<any>();
 
     let trees = [
@@ -434,6 +517,9 @@ export class Item {
   }
 
   private getAvailableSucblassNodesByIdentifier(identifier: string) {
+    if(this.itemType !== ItemTypeEnum.Subclass) {
+      throw new Error("Attempted to use subclass-specific method on non-subclass item.")
+    }
     let nodeCategory = this._meta.talentGridDefinition.nodeCategories.find((n: any) => n.identifier === identifier)
     // TODO: Buld a model for this
     let nodes = new Array<any>();

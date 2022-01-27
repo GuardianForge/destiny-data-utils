@@ -39,6 +39,16 @@ export enum ClassEnum {
   Unknown = 3
 }
 
+export enum EnergyTypeEnum {
+  Any = 0,
+  Solar = 2,
+  Arc = 1,
+  Void = 3,
+  Ghost = 4,
+  Subclass = 5,
+  Stasis = 6,
+}
+
 export enum DamageTypeEnum {
   None = 0,
   Kinetic = 1,

@@ -27,8 +27,6 @@ export class InventoryManager {
   async loadInventory(membershipType: BungieMembershipType, membershipId: string, token: string) {
     let comps = [ 102, 103, 200, 201, 205, 300, 302, 303, 304, 305, 306, 307, 308, 310, 600 ]
     let getProfileResponse = await this._bungieApiService.GetProfile(membershipType, membershipId, comps, token)
-
-    console.log("getProfileResponse", getProfileResponse)
     const {
       profileInventory,
       itemComponents,
@@ -164,5 +162,9 @@ export class InventoryManager {
     })
 
     return socketPlugMap
+  }
+
+  getItemForInstanceId(itemInstanceId: string): (Item | undefined) {
+    return this._inventory.items.find((i: Item) => i._meta && i._meta.inventoryItem && i._meta.inventoryItem.itemInstanceId === itemInstanceId)
   }
 }
