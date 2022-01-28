@@ -106,5 +106,11 @@ export enum SocketTypeEnum {
   WeaponPerks = 4241085061,
   WeaponMods = 2685412949,
   WeaponCosmetics = 2048875504,
-  ArmorMods = 590099826 // TODO: Find the right hash for this
+  ArmorMods = 590099826, // TODO: Find the right hash for this
+  ArmorPerks = 3154740035
+}
+
+export enum WeaponMasterworkType {
+  None = 0,
+  Range = 1
 }

@@ -15,4 +15,5 @@ export class Socket {
   equippedPlug?: SocketItem
   availablePlugs?: SocketItem[]
   potentialPlugs?: SocketItem[]
+  isItemTierSocket?: boolean
 }
