@@ -98,7 +98,7 @@ export class BungieApiService {
    */
   async GetProfile(membershipType: BungieMembershipType, destinyMembershipId: string, components: Array<ComponentTypeEnum>, token?: string): Promise<GetProfileResponse> {
     let url = `${this._bungieNetApiBase}/Destiny2/${membershipType}/Profile/${destinyMembershipId}`
-    url += `?components=${components.join(",")}`
+    url += `/?components=${components.join(",")}`
     if(token) {
       return await this.callBungieNet(url, "GET", { "Authorization": `Bearer ${token}`})
     } else {
@@ -211,7 +211,7 @@ export class BungieApiService {
   async fetchUserInventory(token: string, membershipType: number, membershipId: string) {
     let comps = [ 102, 103, 200, 201, 300, 302, 303, 304, 305, 307, 308, 310, 600, 800 ]
     let url = `${this._bungieNetApiBase}/Destiny2/${membershipType}/Profile/${membershipId}`
-    url += `?components=${comps.join(",")}`
+    url += `/?components=${comps.join(",")}`
     return await this.callBungieNet(url, "GET", { "Authorization": `Bearer ${token}`})
   }
 }
