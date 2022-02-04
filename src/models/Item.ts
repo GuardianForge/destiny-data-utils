@@ -8,6 +8,12 @@ export type ItemTierData = {
   tier?: number
 }
 
+export type ItemSourceData = {
+  sourceName?: string
+  talentGrids?: any
+  plugSets?: any
+}
+
 export type ItemMeta = {
   // Item definition from the manifest
   manifestDefinition?: any
@@ -22,7 +28,7 @@ export type ItemMeta = {
   damageType?: any
   reusablePlugs?: any
   stats?: any
-  source?: string
+  source?: ItemSourceData
   talentGrid?: any
 }
 
@@ -48,15 +54,22 @@ export class Item {
   isVaulted?: boolean
   cost?: number
 
-  constructor(item: any, itemComponents: any, source?: string) {
+  constructor(item: any, itemComponents: any, source?: string, plugSets?: any, talentGrids?: any) {
     this._meta = {}
-    if(source) {
-      this._meta.source = source
-      if(source === "profilePlugs") {
-        this.isOrnament = true
+    if(source || plugSets || talentGrids) {
+      this._meta.source = {
+        sourceName: source,
+        plugSets,
+        talentGrids
       }
-      if(source === "profileInventory") {
-        this.isVaulted = true
+
+      if(source) {
+        if(source === "profilePlugs") {
+          this.isOrnament = true
+        }
+        if(source === "profileInventory") {
+          this.isVaulted = true
+        }
       }
     }
     this._meta.inventoryItem = item
@@ -82,10 +95,8 @@ export class Item {
   /**
    * Populates the item with data from the manifest and other relevant data sets
    * @param manifestService An instance of the ManifestService
-   * @param plugSets  PlugSets from the GetProfile response
-   * @param talentGrids  TalentGrids from the GetProfile response
    */
-  populate(manifestService: any, plugSets: any, talentGrids?: any) {
+  populate(manifestService: any) {
     // Basic info
     let itemHash = 0
     if(this._meta?.inventoryItem.itemHash) {
@@ -211,9 +222,9 @@ export class Item {
         }
 
         // This might show all available plugs for the item...
-        if(plugSets && se.randomizedPlugSetHash) {
+        if(this._meta && this._meta.source && this._meta.source.plugSets && se.randomizedPlugSetHash) {
           // console.log(se.randomizedPlugSetHash)
-          let plugSet = plugSets.plugs[se.randomizedPlugSetHash]
+          let plugSet = this._meta.source.plugSets.plugs[se.randomizedPlugSetHash]
           if(plugSet && socket && socket._meta) {
             socket._meta.plugSet = plugSet
             let potentialPlugs: SocketItem[] = []
@@ -234,8 +245,8 @@ export class Item {
     }
 
     // Talent Grids
-    if(talentGrids && this._meta.inventoryItem.itemInstanceId && talentGrids[this._meta.inventoryItem.itemInstanceId]) {
-      this._meta.talentGrid = talentGrids[this._meta.inventoryItem.itemInstanceId]
+    if(this._meta && this._meta.source && this._meta.source.talentGrids && this._meta.inventoryItem.itemInstanceId && this._meta.source.talentGrids[this._meta.inventoryItem.itemInstanceId]) {
+      this._meta.talentGrid = this._meta.source.talentGrids[this._meta.inventoryItem.itemInstanceId]
     }
   }
 

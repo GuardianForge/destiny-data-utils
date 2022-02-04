@@ -17,6 +17,7 @@ export enum ComponentTypeEnum {
   ItemPerks = 302,
   ItemRenderData = 303,
   ItemStats = 304,
+  ItemSockets = 305,
   ItemTalentGrids = 306,
   ItemCommonData = 307,
   ItemPlugStates = 308,
