@@ -137,8 +137,13 @@ export class BungieApiService {
 
     if(query.includes("#")) {
       let split = query.split("#")
-      query = split[0]
+      // Check if the last el is a number and remove it if so
+      if(!isNaN(Number(split[split.length - 1]))) {
+        split.pop()
+      }
+      query = split.join("#")
     }
+    query = encodeURIComponent(query)
 
     // TODO: Create a model around this
     let searchResults: any = []
